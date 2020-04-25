@@ -107,7 +107,9 @@ function empezarPartida()
 
   -- Mix the decks
   if (imploding) then
+    imploding_pos = deck_imploding.getPosition()
     deck_default.putObject(deck_imploding)
+    single_imploding_after.setPositionSmooth(imploding_pos)
   end
 
   if (streaking) then
