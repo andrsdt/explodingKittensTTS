@@ -80,11 +80,12 @@ end
 
 function getPlayers()
     players = getSeatedPlayers()
-    num_players = 0
-    for v, k in ipairs(players) do
-      num_players = num_players + 1
-      player_colors[v] = k
-    end
+    -- num_players = 0
+    -- for v, k in ipairs(players) do
+    --   num_players = num_players + 1
+    --   player_colors[v] = k
+    -- end
+    num_players = 4
 end
 
 function empezarPartida()
