@@ -80,12 +80,11 @@ end
 
 function getPlayers()
     players = getSeatedPlayers()
-    -- num_players = 0
-    -- for v, k in ipairs(players) do
-    --   num_players = num_players + 1
-    --   player_colors[v] = k
-    -- end
-    num_players = 4
+    num_players = 0
+    for v, k in ipairs(players) do
+      num_players = num_players + 1
+      player_colors[v] = k
+    end
 end
 
 function empezarPartida()
@@ -143,6 +142,7 @@ function empezarPartida()
     for i=2,num_players-1 do
         deck_exploding.takeObject(params)
     end
+    if (num_players == 2) then deck_exploding.takeObject(params) end
   else
     for i=2,num_players do
         deck_exploding.takeObject(params)
@@ -303,8 +303,14 @@ function intercambiaArribaAbajo()
 end
 
 function bombaGatomica()
+  deck_default.shuffle()
   cards_table = deck_default.getObjects()
   deck_pos = deck_default.getPosition()
+  Wait.frames(takeOutExploding, 30)
+  
+end
+
+function takeOutExploding ()
   x = 0
   for i, card in pairs(cards_table) do
     if (card['description'] == 'exploding') then
@@ -325,7 +331,6 @@ function bombaGatomica()
     end
     Wait.frames(function () end, 5)
   end
-
 end
 
 function crearBoton(objeto, texto, funcion, posicionRelativa)
