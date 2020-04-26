@@ -19,6 +19,8 @@ single_imploding_after_guid = '973c0f'
 all_explodings_guid = {'b5aa73','af2021','11c500','d04758','9ddd38'}
 
 bloque_modo_guid = 'b9f95b'
+scripted_zone_guid = 'a708c1'
+see_the_future_zone_guid = 'b387b4'
 
 players = {}
 num_players = 0
@@ -27,6 +29,8 @@ player_colors = {}
 exploding = true
 imploding = false
 streaking = false
+
+revealedCards = {}
 
 function onLoad()
 
@@ -49,8 +53,8 @@ function onLoad()
   bloque_modo = getObjectFromGUID(bloque_modo_guid)
 
   game_board = getObjectFromGUID(game_board_guid)
-
-
+  scripted_zone = getObjectFromGUID(scripted_zone_guid)
+  see_the_future_zone = getObjectFromGUID(see_the_future_zone_guid)
   -- (Instantiating buttons)
   crearBoton(bloque_modo, 'Exploding Kittens', 'setExploding', {-5, 0.2, 0})
   crearBoton(bloque_modo, 'Imploding Kittens', 'setImploding', {-2, 0.2, 0})
@@ -222,34 +226,75 @@ function crearControlesCartas()
 end
 
 function verElFuturo3(objectButtonClicked, playerColorClicked)
-  deck_default.dealToColor(3, playerColorClicked)
+  deck_default = scripted_zone.getObjects()[1]
+  deck_pos = deck_default.getPosition()
+  num = 24 -- first card is put 24 units away from deck, 2nd is 16 away and 3rd is 8 away
+  for i=0, 3 do
+    showCard()
+  end
   crearBoton(bloque_modo, 'Devolver', 'devolver3', {4, 0.2, col_1})
 end
 
-function verElFuturo5(objectButtonClicked, playerColorClicked)
-  deck_default.dealToColor(5, playerColorClicked)
+  function verElFuturo5(objectButtonClicked, playerColorClicked)
+    deck_default = scripted_zone.getObjects()[1]
+    deck_pos = deck_default.getPosition()
+    num = 40
+    for i=0, 5 do
+      showCard()
+    end
   crearBoton(bloque_modo, 'Devolver', 'devolver5', {4, 0.2, col_3})
 end
 
-function devolver3(objectButtonClicked, playerColorClicked)
-  devolver(objectButtonClicked, playerColorClicked, 3)
+function showCard()
+  deck_default = scripted_zone.getObjects()[1]
+  deck_default.takeObject({
+    position = {
+      x = deck_pos.x + num,
+      y = deck_pos.y,
+      z = deck_pos.z,
+    },
+    callback_function = function (obj)
+        obj.flip()
+        table.insert(revealedCards,obj)
+    end
+  })
+  num = num - 8
 end
 
-function devolver5(objectButtonClicked, playerColorClicked)
-  devolver(objectButtonClicked, playerColorClicked, 5)
+function returnCard(i)
+  deck_default = scripted_zone.getObjects()[1]
+  deck_pos = deck_default.getPosition()
+
+  card = revealedCards[i]
+
+  card.flip()
+  card.setPositionSmooth(
+      {
+        x = deck_pos.x,
+        y = deck_pos.y + 1 + i/2,
+        z = deck_pos.z,
+      },
+      false, false)
 end
 
-function devolver(objectButtonClicked, playerColorClicked, i)
-  cards = Player[playerColorClicked].getHandObjects(1)
-
-  for i = 0, i-1 do
-    deck_default.putObject(cards[#cards-i])
+function devolver(cardsnum)
+  for i=1, cardsnum do
+    returnCard(i)
   end
+  revealedCards = {} -- cleans the table for future uses
 
   -- removes the button after clicking it.
   -- workaround to track the position. Removes the last added button
   botones = bloque_modo.getButtons()
   bloque_modo.removeButton(#botones-1)
+end
+
+function devolver3()
+  devolver(3)
+end
+
+function devolver5()
+  devolver(5)
 end
 
 function barajar()
@@ -267,6 +312,7 @@ function cegarOponentes(objectButtonClicked, playerColorClicked)
 end
 
 function robarDelFondo(objectButtonClicked, playerColorClicked)
+  deck_default = scripted_zone.getObjects()[1]
   handPosition = Player[playerColorClicked].getHandTransform(1)['position']
   params = {
     position = handPosition,
@@ -278,6 +324,7 @@ function robarDelFondo(objectButtonClicked, playerColorClicked)
 end
 
 function intercambiaArribaAbajo()
+  deck_default = scripted_zone.getObjects()[1]
   deck_pos = deck_default.getPosition()
   -- 1. Separating the first card
   deck_default.takeObject({
@@ -305,14 +352,15 @@ function intercambiaArribaAbajo()
 end
 
 function bombaGatomica()
+  deck_default = scripted_zone.getObjects()[1]
   deck_default.shuffle()
   cards_table = deck_default.getObjects()
   deck_pos = deck_default.getPosition()
   Wait.frames(takeOutExploding, 30)
-  
+
 end
 
-function takeOutExploding ()
+function takeOutExploding()
   x = 0
   for i, card in pairs(cards_table) do
     if (card['description'] == 'exploding') then
