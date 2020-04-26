@@ -149,20 +149,24 @@ function empezarPartida()
   params.position = center
   params.position.y = 2
   params.rotation = {180, 0, 0}
-  if (imploding) then
+  if (imploding and not streaking) then
     for i=2,num_players-1 do
         deck_exploding.takeObject(params)
     end
     if (num_players == 2) then deck_exploding.takeObject(params) end
-  else
-    for i=2,num_players do
-        deck_exploding.takeObject(params)
-    end
+  end
+
+  for i=2,num_players do
+      deck_exploding.takeObject(params)
   end
 
   -- Put in the imploding kitten if needed
   if(imploding) then
     deck_default.putObject(single_imploding_before)
+  end
+
+  if (streaking and not imploding) then
+    deck_exploding.takeObject(params)
   end
 
   --Create the cleanup button
@@ -329,12 +333,12 @@ end
 
 function devolver3(objectButtonClicked, playerColorClicked)
   devolver(3)
-  cegarOponentes(objectButtonClicked, playerColorClicked)
+  cegarOponentes(objectButtonClicked, playerColorClicked, true)
 end
 
 function devolver5(objectButtonClicked, playerColorClicked)
   devolver(5)
-  cegarOponentes(objectButtonClicked, playerColorClicked)
+  cegarOponentes(objectButtonClicked, playerColorClicked, true)
 end
 
 function barajar()
@@ -342,15 +346,22 @@ function barajar()
   deck_default.shuffle()
 end
 
-function cegarOponentes(objectButtonClicked, playerColorClicked)
+function cegarOponentes(objectButtonClicked, playerColorClicked, devolverVision)
   playerList = Player.getPlayers()
   for _, playerReference in ipairs(playerList) do
     -- toggles blindfold status of all players except the clicker
-    if (playerReference['color'] != playerColorClicked) then
-      playerReference.blindfolded = not playerReference.blindfolded
+    if (playerReference['color'] != 'Grey') then
+      if (playerReference['color'] != playerColorClicked) then
+        if (devolverVision) then
+          playerReference.blindfolded = false
+        else
+          playerReference.blindfolded = not playerReference.blindfolded
+        end
+      end
     end
   end
 end
+
 
 function robarDelFondo(objectButtonClicked, playerColorClicked)
   deck_default = scripted_zone.getObjects()[1]
