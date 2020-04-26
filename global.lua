@@ -2,7 +2,7 @@ deck_default = {}
 deck_default_guid = 'd8428f'
 
 deck_exploding = {}
-deck_exploding_guid = '28a99a'
+deck_exploding_guid = '0eae9d'
 
 deck_defuse = {}
 deck_defuse_guid = '329f35'
@@ -19,6 +19,11 @@ single_imploding_after_guid = '973c0f'
 all_explodings_guid = {'b5aa73','af2021','11c500','d04758','9ddd38'}
 
 bloque_modo_guid = 'b9f95b'
+scripted_zone_guid = 'a708c1'
+script_card_n_guid = {'4261dc','a12864','16445c','16ab9d','18d3cf'}
+
+upper_text_row_guid = 'd7b5e1'
+lower_text_row_guid = 'f348d1'
 
 players = {}
 num_players = 0
@@ -49,7 +54,11 @@ function onLoad()
   bloque_modo = getObjectFromGUID(bloque_modo_guid)
 
   game_board = getObjectFromGUID(game_board_guid)
+  scripted_zone = getObjectFromGUID(scripted_zone_guid)
+  deck_pos = deck_default.getPosition()
 
+  upper_row_text = getObjectFromGUID(upper_text_row_guid)
+  lower_row_text = getObjectFromGUID(lower_text_row_guid)
 
   -- (Instantiating buttons)
   crearBoton(bloque_modo, 'Exploding Kittens', 'setExploding', {-5, 0.2, 0})
@@ -222,29 +231,95 @@ function crearControlesCartas()
 end
 
 function verElFuturo3(objectButtonClicked, playerColorClicked)
-  deck_default.dealToColor(3, playerColorClicked)
+  cegarOponentes(objectButtonClicked, playerColorClicked)
+  deck_default = scripted_zone.getObjects()[1]
+  deck_pos = deck_default.getPosition()
+  num = 24.3 -- first card is put 24 units away from deck, 2nd is 16 away and 3rd is 8 away
+
+  Wait.frames(function ()
+    upper_row_text.setValue('____________          ____________          ____________                                                                    ')
+    lower_row_text.setValue('____________          ____________          ____________                                                                    ')
+  end, 100)
+
+
+  for i=0, 2 do
+    showCard()
+  end
   crearBoton(bloque_modo, 'Devolver', 'devolver3', {4, 0.2, col_1})
 end
 
-function verElFuturo5(objectButtonClicked, playerColorClicked)
-  deck_default.dealToColor(5, playerColorClicked)
+  function verElFuturo5(objectButtonClicked, playerColorClicked)
+    cegarOponentes(objectButtonClicked, playerColorClicked)
+    deck_default = scripted_zone.getObjects()[1]
+    deck_pos = deck_default.getPosition()
+    num = 40.5
+
+    Wait.frames(function ()
+      upper_row_text.setValue('____________          ____________          ____________          ____________          ____________')
+      lower_row_text.setValue('____________          ____________          ____________          ____________          ____________')
+    end, 100)
+
+    for i=0, 4 do
+      showCard()
+    end
   crearBoton(bloque_modo, 'Devolver', 'devolver5', {4, 0.2, col_3})
 end
 
-function devolver3(objectButtonClicked, playerColorClicked)
-  devolver(objectButtonClicked, playerColorClicked, 3)
+function showCard()
+    deck_default = scripted_zone.getObjects()[1]
+    flip = {
+      x = 0,
+      y = 180,
+      z = 0
+    }
+
+    card_position = {
+      x = deck_pos.x + num,
+      y = deck_pos.y+1.5,
+      z = deck_pos.z,
+    }
+
+    deck_default.takeObject({
+      position = card_position,
+      callback_function = function (obj)
+        obj.setRotationSmooth(flip, false, false)
+      end
+    })
+
+    num = num - 8.1
 end
 
-function devolver5(objectButtonClicked, playerColorClicked)
-  devolver(objectButtonClicked, playerColorClicked, 5)
-end
+function returnCard(i)
+  scripted_card_n = getObjectFromGUID(script_card_n_guid[i])
+  card = scripted_card_n.getObjects()[1]
+  if (card != nil) then -- prevents errors when there are less than n cards left
+    flip = {
+      x = 0,
+      y = 180,
+      z = 180
+    }
+    card.setRotationSmooth(flip, false, false)
+    --[[Sets the card upside down. A better option than flip() since it doesn't
+    flip the card twice if it's already flipped]]
 
-function devolver(objectButtonClicked, playerColorClicked, i)
-  cards = Player[playerColorClicked].getHandObjects(1)
-
-  for i = 0, i-1 do
-    deck_default.putObject(cards[#cards-i])
+    card.setPositionSmooth(
+    {
+      x = deck_pos.x,
+      y = deck_pos.y + 0.5 + i/4,
+      z = deck_pos.z,
+    },
+    false, false)
   end
+
+end
+
+function devolver(pos_in_table)
+  for i=1, pos_in_table do
+    returnCard(i)
+  end
+
+  upper_row_text.setValue(' ')
+  lower_row_text.setValue(' ')
 
   -- removes the button after clicking it.
   -- workaround to track the position. Removes the last added button
@@ -252,7 +327,18 @@ function devolver(objectButtonClicked, playerColorClicked, i)
   bloque_modo.removeButton(#botones-1)
 end
 
+function devolver3(objectButtonClicked, playerColorClicked)
+  devolver(3)
+  cegarOponentes(objectButtonClicked, playerColorClicked)
+end
+
+function devolver5(objectButtonClicked, playerColorClicked)
+  devolver(5)
+  cegarOponentes(objectButtonClicked, playerColorClicked)
+end
+
 function barajar()
+  deck_default = scripted_zone.getObjects()[1]
   deck_default.shuffle()
 end
 
@@ -267,6 +353,7 @@ function cegarOponentes(objectButtonClicked, playerColorClicked)
 end
 
 function robarDelFondo(objectButtonClicked, playerColorClicked)
+  deck_default = scripted_zone.getObjects()[1]
   handPosition = Player[playerColorClicked].getHandTransform(1)['position']
   params = {
     position = handPosition,
@@ -278,6 +365,7 @@ function robarDelFondo(objectButtonClicked, playerColorClicked)
 end
 
 function intercambiaArribaAbajo()
+  deck_default = scripted_zone.getObjects()[1]
   deck_pos = deck_default.getPosition()
   -- 1. Separating the first card
   deck_default.takeObject({
@@ -305,14 +393,15 @@ function intercambiaArribaAbajo()
 end
 
 function bombaGatomica()
+  deck_default = scripted_zone.getObjects()[1]
   deck_default.shuffle()
   cards_table = deck_default.getObjects()
   deck_pos = deck_default.getPosition()
   Wait.frames(takeOutExploding, 30)
-  
+
 end
 
-function takeOutExploding ()
+function takeOutExploding()
   x = 0
   for i, card in pairs(cards_table) do
     if (card['description'] == 'exploding') then
