@@ -20,7 +20,7 @@ all_explodings_guid = {'b5aa73','af2021','11c500','d04758','9ddd38'}
 
 bloque_modo_guid = 'b9f95b'
 scripted_zone_guid = 'a708c1'
-see_the_future_zone_guid = 'b387b4'
+script_card_n_guid = {'4261dc','a12864','16445c','16ab9d','18d3cf'}
 
 players = {}
 num_players = 0
@@ -29,8 +29,6 @@ player_colors = {}
 exploding = true
 imploding = false
 streaking = false
-
-revealedCards = {}
 
 function onLoad()
 
@@ -54,7 +52,8 @@ function onLoad()
 
   game_board = getObjectFromGUID(game_board_guid)
   scripted_zone = getObjectFromGUID(scripted_zone_guid)
-  see_the_future_zone = getObjectFromGUID(see_the_future_zone_guid)
+  deck_pos = deck_default.getPosition()
+
   -- (Instantiating buttons)
   crearBoton(bloque_modo, 'Exploding Kittens', 'setExploding', {-5, 0.2, 0})
   crearBoton(bloque_modo, 'Imploding Kittens', 'setImploding', {-2, 0.2, 0})
@@ -228,8 +227,8 @@ end
 function verElFuturo3(objectButtonClicked, playerColorClicked)
   deck_default = scripted_zone.getObjects()[1]
   deck_pos = deck_default.getPosition()
-  num = 24 -- first card is put 24 units away from deck, 2nd is 16 away and 3rd is 8 away
-  for i=0, 3 do
+  num = 24.3 -- first card is put 24 units away from deck, 2nd is 16 away and 3rd is 8 away
+  for i=0, 2 do
     showCard()
   end
   crearBoton(bloque_modo, 'Devolver', 'devolver3', {4, 0.2, col_1})
@@ -238,47 +237,59 @@ end
   function verElFuturo5(objectButtonClicked, playerColorClicked)
     deck_default = scripted_zone.getObjects()[1]
     deck_pos = deck_default.getPosition()
-    num = 40
-    for i=0, 5 do
+    num = 40.5
+    for i=0, 4 do
       showCard()
     end
   crearBoton(bloque_modo, 'Devolver', 'devolver5', {4, 0.2, col_3})
 end
 
 function showCard()
-  deck_default = scripted_zone.getObjects()[1]
-  deck_default.takeObject({
-    position = {
-      x = deck_pos.x + num,
-      y = deck_pos.y,
-      z = deck_pos.z,
-    },
-    callback_function = function (obj)
-        obj.flip()
-        table.insert(revealedCards,obj)
-    end
-  })
-  num = num - 8
+    deck_default = scripted_zone.getObjects()[1]
+
+    flip = {
+          x = 0,
+          y = 180,
+          z = 0
+        }
+
+    deck_default.takeObject({
+      position = {
+        x = deck_pos.x + num,
+        y = deck_pos.y+1.5,
+        z = deck_pos.z,
+      },
+      callback_function = function (obj) obj.setRotationSmooth(flip, false, false) end
+    })
+    num = num - 8.1
 end
 
 function returnCard(i)
-  deck_default = scripted_zone.getObjects()[1]
-  deck_pos = deck_default.getPosition()
+  scripted_card_n = getObjectFromGUID(script_card_n_guid[i])
+  card = scripted_card_n.getObjects()[1]
+  if (card != nil) then -- prevents errors when there are less than n cards left
+    flip = {
+      x = 0,
+      y = 180,
+      z = 180
+    }
+    card.setRotationSmooth(flip, false, false)
+    --[[Sets the card upside down. A better option than flip() since it doesn't
+    flip the card twice if it's already flipped]]
 
-  card = revealedCards[i]
+    card.setPositionSmooth(
+    {
+      x = deck_pos.x,
+      y = deck_pos.y + 0.5 + i/4,
+      z = deck_pos.z,
+    },
+    false, false)
+  end
 
-  card.flip()
-  card.setPositionSmooth(
-      {
-        x = deck_pos.x,
-        y = deck_pos.y + 1 + i/2,
-        z = deck_pos.z,
-      },
-      false, false)
 end
 
-function devolver(cardsnum)
-  for i=1, cardsnum do
+function devolver(pos_in_table)
+  for i=1, pos_in_table do
     returnCard(i)
   end
   revealedCards = {} -- cleans the table for future uses
@@ -298,6 +309,7 @@ function devolver5()
 end
 
 function barajar()
+  deck_default = scripted_zone.getObjects()[1]
   deck_default.shuffle()
 end
 
