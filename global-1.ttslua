@@ -13,6 +13,7 @@ deck_streaking = {}
 deck_streaking_guid = 'b8db4f'
 
 instructions_book_guid = '5a3f0e'
+turn_signal_guid = '7a3b65'
 single_streaking_guid = '11c500'
 single_imploding_before_guid = '2d5acc'
 single_imploding_after_guid = '973c0f'
@@ -54,6 +55,7 @@ function onLoad()
   bloque_modo = getObjectFromGUID(bloque_modo_guid)
 
   game_board = getObjectFromGUID(game_board_guid)
+  turn_signal = getObjectFromGUID(turn_signal_guid)
   scripted_zone = getObjectFromGUID(scripted_zone_guid)
   deck_pos = deck_default.getPosition()
 
@@ -115,8 +117,9 @@ function empezarPartida()
   getPlayers()
 
   -- Mix the decks
+
+  imploding_pos = deck_imploding.getPosition()
   if (imploding) then
-    imploding_pos = deck_imploding.getPosition()
     deck_default.putObject(deck_imploding)
     single_imploding_after.setPositionSmooth(imploding_pos)
   end
@@ -125,6 +128,13 @@ function empezarPartida()
     deck_exploding.putObject(single_streaking)
     deck_default.putObject(deck_streaking)
   end
+
+  instruction_pos = instructions_book.getPosition()
+  turn_signal.setPositionSmooth({
+    x = instruction_pos.x,
+    y = instruction_pos.y + 1,
+    z = instruction_pos.z,
+  })
 
   --Shuffle all cards to deal out the action cards
   deck_default.shuffle()
@@ -149,24 +159,25 @@ function empezarPartida()
   params.position = center
   params.position.y = 2
   params.rotation = {180, 0, 0}
-  if (imploding and not streaking) then
-    for i=2,num_players-1 do
-        deck_exploding.takeObject(params)
-    end
-    if (num_players == 2) then deck_exploding.takeObject(params) end
-  end
 
-  for i=2,num_players do
+  if (not imploding and not streaking) then
+    for i=1,num_players-1 do
       deck_exploding.takeObject(params)
-  end
-
-  -- Put in the imploding kitten if needed
-  if(imploding) then
+    end
+  elseif (imploding and not streaking) then
     deck_default.putObject(single_imploding_before)
-  end
-
-  if (streaking and not imploding) then
-    deck_exploding.takeObject(params)
+    for i=1, num_players-2 do
+      deck_exploding.takeObject(params)
+    end
+  elseif (streaking and not imploding) then
+    for i=1,num_players do
+      deck_exploding.takeObject(params)
+    end
+  elseif (imploding and streaking) then
+    deck_default.putObject(single_imploding_before)
+    for i=1,num_players-1 do
+      deck_exploding.takeObject(params)
+    end
   end
 
   --Create the cleanup button
@@ -207,7 +218,12 @@ function limpiarMesa()
     crearControlesCartas()
 
     -- Shuffle the actions deck again
-    deck_default.shuffle()
+    Wait.frames(function() deck_default.shuffle() end, 100)
+    --[[The 100 frames wait before shuffling prevents the exploding
+    kitten being on top if buttons are pressed too fast]]
+
+    -- Chooses a random player to start
+    broadcastToAll("Empieza ".. Player.getPlayers()[math.random(#Player.getPlayers())].steam_name, {1,1,1})
 end
 
 function crearControlesCartas()
@@ -219,7 +235,7 @@ function crearControlesCartas()
   -- default card actions are in the 1st column
   crearBoton(bloque_modo, 'Barajar', 'barajar', {-5, 0.2, col_1})
   crearBoton(bloque_modo, 'Cegar a oponentes', 'cegarOponentes', {-2, 0.2, col_1})
-  crearBoton(bloque_modo, 'Ver el futuro (x3)', 'verElFuturo3', {1, 0.2, col_1})
+  crearBoton(bloque_modo, 'Ver el futuro (x3)\nAlterar el futuro (x3)', 'verElFuturo3', {1, 0.2, col_1})
 
   if (imploding) then -- imploding card actions are in the 2nd column
     crearBoton(bloque_modo, 'Roba del fondo', 'robarDelFondo', {-5, 0.2, col_2})
@@ -227,7 +243,7 @@ function crearControlesCartas()
 
   if (streaking) then -- streaking card actions are in the 3rd colun
     crearBoton(bloque_modo, 'Intercambia extremos', 'intercambiaArribaAbajo', {-5, 0.2, col_3})
-    crearBoton(bloque_modo, 'Ver el futuro (x5)', 'verElFuturo5', {1, 0.2, col_3})
+    crearBoton(bloque_modo, 'Ver el futuro (x5)\nAlterar el futuro (x5)', 'verElFuturo5', {1, 0.2, col_3})
 
     crearBoton(bloque_modo, 'Bomba gatómica', 'bombaGatomica', {-2, 0.2, col_3})
 
@@ -350,13 +366,11 @@ function cegarOponentes(objectButtonClicked, playerColorClicked, devolverVision)
   playerList = Player.getPlayers()
   for _, playerReference in ipairs(playerList) do
     -- toggles blindfold status of all players except the clicker
-    if (playerReference['color'] != 'Grey') then
-      if (playerReference['color'] != playerColorClicked) then
-        if (devolverVision) then
-          playerReference.blindfolded = false
-        else
-          playerReference.blindfolded = not playerReference.blindfolded
-        end
+    if (playerReference['color'] != 'Grey' and playerReference['color'] != playerColorClicked) then
+      if (devolverVision) then
+        playerReference.blindfolded = false
+      else
+        playerReference.blindfolded = not playerReference.blindfolded
       end
     end
   end
@@ -381,7 +395,7 @@ function intercambiaArribaAbajo()
   -- 1. Separating the first card
   deck_default.takeObject({
     position = {
-      x = deck_pos.x-8,
+      x = deck_pos.x+7,
       y = deck_pos.y,
       z = deck_pos.z,
     },
