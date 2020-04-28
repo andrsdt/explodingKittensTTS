@@ -17,7 +17,9 @@ deck_streaking_guid = 'b8db4f'
 default_box_guid = '1ae83c'
 nsfw_box_guid = '282589'
 
-instructions_book_guid = '5a3f0e'
+instructions_book_eng_guid = '1d41bd'
+instructions_book_esp_guid = '5a3f0e'
+
 turn_signal_guid = '7a3b65'
 single_streaking_guid = '11c500'
 single_imploding_before_guid = '2d5acc'
@@ -43,34 +45,43 @@ nsfw = false
 imploding = false
 streaking = false
 
+blindfoldToggle = true
 english = true
 
 lang = {
   ENGLISH = {
     CLEAR = "Clear deck",
     START = "Start",
-    FIRST = "starts!", -- TODO Appears after the name
+    FIRST = "starts!",
+    DRAW = "Draw",
+    DRAWMSG = "has drawn a card",
     SHUFFLE = "Shuffle",
     BLINDFOLD = "Blindfold oponents",
+    BLINDFOLDED = "Oponents have been blindfolded",
+    UNBLINDFOLDED = "Oponents have been unblindfolded",
     SEETHEFUTURE3 = "See the future (x3)\nAlter the future (x3)",
     SEETHEFUTURE5 = "See the future (x5)\nAlter the future (x5)",
     CATOMICBOMB = "Catomic bomb",
     DRAWFROMBOTTOM = "Draw from the bottom",
     SWAPTOPBOTTOM = "Swap top and bottom",
-    RETURN = "Return cards"
+    RETURNCARDS = "Return cards"
   },
   SPANISH = {
     CLEAR = "Limpiar mesa",
     START = "Comenzar",
-    FIRST = "empieza!", -- TODO Appears after the name
+    FIRST = "empieza!",
+    DRAW = "Robar",
+    DRAWMSG = "ha robado una carta",
     SHUFFLE = "Barajar",
     BLINDFOLD = "Cegar oponentes",
+    BLINDFOLDED = "Los oponentes han sido cegados",
+    UNBLINDFOLDED = "Los oponentes ya pueden ver",
     SEETHEFUTURE3 = "Ver el futuro (x3)\nAlterar el futuro (x3)",
     SEETHEFUTURE5 = "Ver el futuro (x5)\nAlterar el futuro (x5)",
     CATOMICBOMB = "Bomba gatómica",
     DRAWFROMBOTTOM = "Robar del fondo",
     SWAPTOPBOTTOM = "Intercambiar extremos",
-    Return = "Devolver cartas"
+    RETURNCARDS = "Devolver cartas"
   }
 }
 
@@ -101,7 +112,7 @@ function onLoad()
   nsfw_box = getObjectFromGUID(nsfw_box_guid)
 
   -- OTHER OBJECTS
-  instructions_book = getObjectFromGUID(instructions_book_guid)
+  instructions_book = getObjectFromGUID(instructions_book_eng_guid)
   checker = getObjectFromGUID(checker_guid)
 
   game_board = getObjectFromGUID(game_board_guid)
@@ -129,6 +140,11 @@ function setEnglish()
     english = true
     broadcastToAll("Language set to english", {1,1,1})
   end
+  instructions_book.setPosition({-33.5,-8,15.23}) -- Hides it under the table
+  instructions_book.setLock(true)
+  instructions_book = getObjectFromGUID(instructions_book_eng_guid)
+  instructions_book.setPosition({-33.5,0.96,15.23})
+  instructions_book.setLock(false)
 end
 
 function setSpanish()
@@ -141,6 +157,11 @@ function setSpanish()
       broadcastToAll("NSFW sólo está disponible en inglés por el momento, ¡lo siento!", {1,1,1})
     end
   end
+  instructions_book.setPosition({-33.5,-8,15.23}) -- Hides it under the table
+  instructions_book.setLock(true)
+  instructions_book = getObjectFromGUID(instructions_book_esp_guid)
+  instructions_book.setPosition({-33.5,0.96,15.23})
+  instructions_book.setLock(false)
 end
 
 function setNSFW()
@@ -196,7 +217,6 @@ function getPlayers()
       num_players = num_players + 1
       player_colors[v] = k
     end
-    num_players = 4 -- TODO debug
 end
 
 function prepararPartida()
@@ -216,7 +236,7 @@ function prepararPartida()
   for i=1,8 do
     default_box.takeObject({
       index = english == true and 8 or 0,
-      position = {x = 20, y = 2+i/3, z = 7.5},
+      position = {x = 20, y = 2+i/3, z = 7.11},
       callback_function = function (obj) obj.destruct() end
     })
   end
@@ -228,7 +248,7 @@ function prepararPartida()
 
     for i=0,2 do
       default_box.takeObject({
-        position = {x = 10, y = 2+i/3, z = 7.5},
+        position = {x = 10, y = 2+i/3, z = 7.11},
         callback_function = function (obj) obj.destruct() end
       })
     end
@@ -251,9 +271,6 @@ function empezarPartida()
   -- Set the player count
   getPlayers()
 
-  -- Mix the decks TODO falta algo??
-
-  -- TODO TO BE FIXED
   if (imploding) then
     single_imploding_after = objectFromBox("IMPLODING AFTER", default_box)
     default_box.takeObject({
@@ -350,12 +367,12 @@ function empezarPartida()
       end
     end
     instruction_pos = instructions_book.getPosition()
-    turn_signal.setPositionSmooth({-5.1, 1.05, 15.2})
   end, 270)
 
   Wait.frames(function ()
     --Create the cleanup button
     deck_defuse = defuse_scripted_zone.getObjects()[1]
+    deck_default.setName("")
     local button = {}
     button.click_function = 'limpiarMesa'
     button.label = lang['START']
@@ -415,6 +432,7 @@ function crearControlesCartas()
   crearBoton(checker, lang['SHUFFLE'], 'barajar', {-5, 0.2, col_1})
   crearBoton(checker, lang['BLINDFOLD'], 'cegarOponentes', {-2, 0.2, col_1})
   crearBoton(checker, lang['SEETHEFUTURE3'], 'verElFuturo3', {1, 0.2, col_1})
+  crearBoton(checker, lang['DRAW'], 'robar', {21, 0.2, 8.25}, 2100)
 
   if (imploding) then -- imploding card actions are in the 2nd column
     crearBoton(checker, lang['DRAWFROMBOTTOM'], 'robarDelFondo', {-5, 0.2, col_2})
@@ -425,9 +443,13 @@ function crearControlesCartas()
     crearBoton(checker, lang['SEETHEFUTURE5'], 'verElFuturo5', {1, 0.2, col_3})
     crearBoton(checker, lang['CATOMICBOMB'], 'bombaGatomica', {-2, 0.2, col_3})
   end
+  turn_signal.setPosition({-5.1, 1.05, 15.2})
+  turn_signal.setLock(false)
 end
 
 function verElFuturo3(objectButtonClicked, playerColorClicked)
+  checker.clearButtons()
+  blindfoldToggle = true
   cegarOponentes(objectButtonClicked, playerColorClicked)
   deck_default = scripted_zone.getObjects()[1]
   deck_pos = deck_default.getPosition()
@@ -442,10 +464,12 @@ function verElFuturo3(objectButtonClicked, playerColorClicked)
   for i=0, 2 do
     showCard()
   end
-  crearBoton(checker, 'Devolver', 'devolver3', {4, 0.2, col_1})
+  crearBoton(checker, lang['RETURNCARDS'], 'devolver3', {4, 0.2, col_1})
 end
 
   function verElFuturo5(objectButtonClicked, playerColorClicked)
+    checker.clearButtons()
+    blindfoldToggle = true
     cegarOponentes(objectButtonClicked, playerColorClicked)
     deck_default = scripted_zone.getObjects()[1]
     deck_pos = deck_default.getPosition()
@@ -459,7 +483,7 @@ end
     for i=0, 4 do
       showCard()
     end
-  crearBoton(checker, lang['RETURN'], 'devolver5', {4, 0.2, col_3})
+  crearBoton(checker, lang['RETURNCARDS'], 'devolver5', {4, 0.2, col_3})
 end
 
 function showCard()
@@ -518,20 +542,20 @@ function devolver(pos_in_table)
   upper_row_text.setValue(' ')
   lower_row_text.setValue(' ')
 
-  -- removes the button after clicking it.
-  -- workaround to track the position. Removes the last added button
-  botones = checker.getButtons()
-  checker.removeButton(#botones-1)
+  checker.removeButton(0)
+  crearControlesCartas()
 end
 
 function devolver3(objectButtonClicked, playerColorClicked)
   devolver(3)
-  cegarOponentes(objectButtonClicked, playerColorClicked, true)
+  blindfoldToggle = false
+  cegarOponentes(objectButtonClicked, playerColorClicked)
 end
 
 function devolver5(objectButtonClicked, playerColorClicked)
   devolver(5)
-  cegarOponentes(objectButtonClicked, playerColorClicked, true)
+  blindfoldToggle = false
+  cegarOponentes(objectButtonClicked, playerColorClicked)
 end
 
 function barajar()
@@ -539,18 +563,31 @@ function barajar()
   deck_default.shuffle()
 end
 
-function cegarOponentes(objectButtonClicked, playerColorClicked, devolverVision)
+function robar(objectButtonClicked, playerColorClicked)
+  deck_default = scripted_zone.getObjects()[1]
+  deck_default.deal(1,playerColorClicked)
+  broadcastToAll(Player[playerColorClicked].steam_name .. " " .. lang['DRAWMSG'], {1,1,1})
+end
+
+function cegarOponentes(objectButtonClicked, playerColorClicked)
+  if (blindfoldToggle == true) then
+    broadcastToColor(lang['BLINDFOLDED'], playerColorClicked, {1,1,1})
+  else
+    broadcastToColor(lang['UNBLINDFOLDED'], playerColorClicked, {1,1,1})
+  end
+
   playerList = Player.getPlayers()
   for _, playerReference in ipairs(playerList) do
     -- toggles blindfold status of all players except the clicker
     if (playerReference['color'] != 'Grey' and playerReference['color'] != playerColorClicked) then
-      if (devolverVision) then
-        playerReference.blindfolded = false
+      if (blindfoldToggle == true) then
+        playerReference.blindfolded = true
       else
-        playerReference.blindfolded = not playerReference.blindfolded
+        playerReference.blindfolded = false
       end
     end
   end
+  blindfoldToggle = not blindfoldToggle
 end
 
 
