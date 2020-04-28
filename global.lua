@@ -22,9 +22,8 @@ turn_signal_guid = '7a3b65'
 single_streaking_guid = '11c500'
 single_imploding_before_guid = '2d5acc'
 single_imploding_after_guid = '973c0f'
--- all_explodings_guid = {'b5aa73','af2021','11c500','d04758','9ddd38'}
 
-bloque_modo_guid = 'b9f95b'
+checker_guid = 'b9f95b'
 
 scripted_zone_guid = 'a708c1'
 defuse_scripted_zone_guid = 'c7e370'
@@ -58,6 +57,7 @@ lang = {
     CATOMICBOMB = "Catomic bomb",
     DRAWFROMBOTTOM = "Draw from the bottom",
     SWAPTOPBOTTOM = "Swap top and bottom",
+    RETURN = "Return cards"
   },
   SPANISH = {
     CLEAR = "Limpiar mesa",
@@ -70,6 +70,7 @@ lang = {
     CATOMICBOMB = "Bomba gatómica",
     DRAWFROMBOTTOM = "Robar del fondo",
     SWAPTOPBOTTOM = "Intercambiar extremos",
+    Return = "Devolver cartas"
   }
 }
 
@@ -88,6 +89,11 @@ exploding_pos = {
   rotation = {0,180,0},
 }
 
+checker_pos = {
+  position = {-17.2,1.1,15.2},
+  rotation = {0,270,0},
+}
+
 function onLoad()
 
   -- BOXES
@@ -96,7 +102,7 @@ function onLoad()
 
   -- OTHER OBJECTS
   instructions_book = getObjectFromGUID(instructions_book_guid)
-  bloque_modo = getObjectFromGUID(bloque_modo_guid)
+  checker = getObjectFromGUID(checker_guid)
 
   game_board = getObjectFromGUID(game_board_guid)
   turn_signal = getObjectFromGUID(turn_signal_guid)
@@ -108,22 +114,32 @@ function onLoad()
   lower_row_text = getObjectFromGUID(lower_text_row_guid)
 
   -- (Instantiating buttons)
-  crearBoton(bloque_modo, 'Exploding Kittens\nExploding Kittens (NSFW)', 'setNSFW', {-5, 0.2, 0})
-  crearBoton(bloque_modo, 'Imploding Kittens', 'setImploding', {-2, 0.2, 0})
-  crearBoton(bloque_modo, 'Streaking Kittens', 'setStreaking', {1, 0.2, 0})
-  crearBoton(bloque_modo, 'English / Spanish', 'setLanguage', {4, 0.2, 0})
-  crearBoton(bloque_modo, 'Start!', 'prepararPartida', {8, 0.2, 0})
+  crearBoton(checker, 'NSFW', 'setNSFW', {-7.5, 0.2, 0})
+  crearBoton(checker, 'Imploding Kittens', 'setImploding', {-4.5, 0.2, 0})
+  crearBoton(checker, 'Streaking Kittens', 'setStreaking', {-1.5, 0.2, 0})
+  crearBoton(checker, 'English', 'setEnglish', {1.5, 0.2, 2.6}, 2600)
+  crearBoton(checker, 'Español', 'setSpanish', {1.5, 0.2, -2.6}, 2600)
+  crearBoton(checker, 'Start', 'prepararPartida', {11, 0.2, 0})
 end
 
-function setLanguage()
-  english = not english
+function setEnglish()
   if (english) then
-    broadcastToAll("Language set to english", {1,1,1})
+    broadcastToAll("Language already set to english", {1,1,1})
   else
-    if (nsfw) then
-      broadcastToAll("NSFW no está disponible en español todavía, ¡lo siento!", {1,1,1})
-    end
+    english = true
+    broadcastToAll("Language set to english", {1,1,1})
+  end
+end
+
+function setSpanish()
+  if (not english) then
+    broadcastToAll("Idioma ya en español", {1,1,1})
+  else
+    english = false
     broadcastToAll("Idioma cambiado a español", {1,1,1})
+    if (nsfw) then
+      broadcastToAll("NSFW sólo está disponible en inglés por el momento, ¡lo siento!", {1,1,1})
+    end
   end
 end
 
@@ -136,7 +152,7 @@ function setNSFW()
       broadcastToAll("Cards will be default", {1,1,1})
     end
   else
-    broadcastToAll("Todavía no está disponible la versión NSFW en español, ¡lo siento!", {1,1,1})
+      broadcastToAll("NSFW sólo está disponible en inglés por el momento, ¡lo siento!", {1,1,1})
   end
 end
 
@@ -184,8 +200,17 @@ function getPlayers()
 end
 
 function prepararPartida()
+  -- Select the Language
+  if (english) then
+    lang = lang['ENGLISH']
+  else
+    lang = lang['SPANISH']
+  end
+
   -- Clear the board
-  bloque_modo.clearButtons()
+  checker.clearButtons()
+  checker.setPositionSmooth(checker_pos.position)
+  checker.setRotationSmooth(checker_pos.rotation)
 
   -- Takes out the three main stacks
   for i=1,8 do
@@ -261,13 +286,6 @@ function empezarPartida()
     })
   end
 
-  instruction_pos = instructions_book.getPosition()
-  turn_signal.setPositionSmooth({
-    x = instruction_pos.x,
-    y = instruction_pos.y + 0.5,
-    z = instruction_pos.z,
-  })
-
   --Shuffle all cards to deal out the action cards
   Wait.frames(function ()
     deck_default = scripted_zone.getObjects()[1]
@@ -331,17 +349,16 @@ function empezarPartida()
         deck_exploding.takeObject(params)
       end
     end
+    instruction_pos = instructions_book.getPosition()
+    turn_signal.setPositionSmooth({-5.1, 1.05, 15.2})
   end, 270)
 
   Wait.frames(function ()
-    default_box.destruct()
-    nsfw_box.destruct()
-
     --Create the cleanup button
     deck_defuse = defuse_scripted_zone.getObjects()[1]
     local button = {}
     button.click_function = 'limpiarMesa'
-    button.label = 'Comenzar'
+    button.label = lang['START']
     button.position = {1.5, 0.6, 2.6}
     button.width = 2600
     button.height = 500
@@ -351,6 +368,8 @@ function empezarPartida()
 end
 
 function limpiarMesa()
+  default_box.destruct()
+  nsfw_box.destruct()
   deck_default = scripted_zone.getObjects()[1]
   deck_defuse = defuse_scripted_zone.getObjects()[1]
   deck_exploding = exploding_scripted_zone.getObjects()[1]
@@ -379,11 +398,11 @@ function limpiarMesa()
 
   -- Shuffle the actions deck again
   Wait.frames(function() deck_default.shuffle() end, 60)
-  --[[The 100 frames wait before shuffling prevents the exploding
+  --[[The 60 frames wait before shuffling prevents the exploding
   kitten being on top if buttons are pressed too fast]]
 
   -- Chooses a random player to start
-  broadcastToAll("Empieza ".. Player.getPlayers()[math.random(#Player.getPlayers())].steam_name, {1,1,1})
+  broadcastToAll(Player.getPlayers()[math.random(#Player.getPlayers())].steam_name.." "..lang['FIRST'], {1,1,1})
 end
 
 function crearControlesCartas()
@@ -393,18 +412,18 @@ function crearControlesCartas()
   col_3 = -24
 
   -- default card actions are in the 1st column
-  crearBoton(bloque_modo, 'Barajar', 'barajar', {-5, 0.2, col_1})
-  crearBoton(bloque_modo, 'Cegar a oponentes', 'cegarOponentes', {-2, 0.2, col_1})
-  crearBoton(bloque_modo, 'Ver el futuro (x3)\nAlterar el futuro (x3)', 'verElFuturo3', {1, 0.2, col_1})
+  crearBoton(checker, lang['SHUFFLE'], 'barajar', {-5, 0.2, col_1})
+  crearBoton(checker, lang['BLINDFOLD'], 'cegarOponentes', {-2, 0.2, col_1})
+  crearBoton(checker, lang['SEETHEFUTURE3'], 'verElFuturo3', {1, 0.2, col_1})
 
   if (imploding) then -- imploding card actions are in the 2nd column
-    crearBoton(bloque_modo, 'Roba del fondo', 'robarDelFondo', {-5, 0.2, col_2})
+    crearBoton(checker, lang['DRAWFROMBOTTOM'], 'robarDelFondo', {-5, 0.2, col_2})
   end
 
   if (streaking) then -- streaking card actions are in the 3rd colun
-    crearBoton(bloque_modo, 'Intercambia extremos', 'intercambiaArribaAbajo', {-5, 0.2, col_3})
-    crearBoton(bloque_modo, 'Ver el futuro (x5)\nAlterar el futuro (x5)', 'verElFuturo5', {1, 0.2, col_3})
-    crearBoton(bloque_modo, 'Bomba gatómica', 'bombaGatomica', {-2, 0.2, col_3})
+    crearBoton(checker, lang['SWAPTOPBOTTOM'], 'intercambiaArribaAbajo', {-5, 0.2, col_3})
+    crearBoton(checker, lang['SEETHEFUTURE5'], 'verElFuturo5', {1, 0.2, col_3})
+    crearBoton(checker, lang['CATOMICBOMB'], 'bombaGatomica', {-2, 0.2, col_3})
   end
 end
 
@@ -423,7 +442,7 @@ function verElFuturo3(objectButtonClicked, playerColorClicked)
   for i=0, 2 do
     showCard()
   end
-  crearBoton(bloque_modo, 'Devolver', 'devolver3', {4, 0.2, col_1})
+  crearBoton(checker, 'Devolver', 'devolver3', {4, 0.2, col_1})
 end
 
   function verElFuturo5(objectButtonClicked, playerColorClicked)
@@ -440,7 +459,7 @@ end
     for i=0, 4 do
       showCard()
     end
-  crearBoton(bloque_modo, 'Devolver', 'devolver5', {4, 0.2, col_3})
+  crearBoton(checker, lang['RETURN'], 'devolver5', {4, 0.2, col_3})
 end
 
 function showCard()
@@ -501,8 +520,8 @@ function devolver(pos_in_table)
 
   -- removes the button after clicking it.
   -- workaround to track the position. Removes the last added button
-  botones = bloque_modo.getButtons()
-  bloque_modo.removeButton(#botones-1)
+  botones = checker.getButtons()
+  checker.removeButton(#botones-1)
 end
 
 function devolver3(objectButtonClicked, playerColorClicked)
@@ -606,12 +625,13 @@ function takeOutExploding()
   end
 end
 
-function crearBoton(objeto, texto, funcion, posicionRelativa)
+function crearBoton(objeto, texto, funcion, posicionRelativa, reduccionHorizontal)
+  if (reduccionHorizontal == nil) then reduccionHorizontal = 0 end
   local button = {}
   button.click_function = funcion
   button.label = texto
   button.position = posicionRelativa
-  button.width = 4800
+  button.width = 4800 - reduccionHorizontal
   button.height = 1000
   button.font_size = 450
   button.rotation = {0,270,0}
@@ -620,7 +640,7 @@ function crearBoton(objeto, texto, funcion, posicionRelativa)
 end
 
 function objectFromBox(name, box)
-    -- aux function
+    -- Aux function, needed since object's GUIDs change when they are added/removed to the box.
     decks = box.getObjects()
     for k,v in pairs(decks) do
       if string.find(v['name'], name) or v['name'] == 'Card Custom' then -- There is a spanish card without name, so it's "Card Custom"
