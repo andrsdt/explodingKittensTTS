@@ -85,6 +85,12 @@ lang = {
   }
 }
 
+COLORS = {
+  RED = {150/255,0,0},
+  GREEN = {0,150/255,0},
+  WHITE = {1,1,1},
+}
+
 deck_pos = {
   position = {-25.4,0.8,1},
   rotation = {0,180,180},
@@ -135,10 +141,10 @@ end
 
 function setEnglish()
   if (english) then
-    broadcastToAll("Language already set to english", {1,1,1})
+    broadcastToAll("Language already set to english", COLORS['WHITE'])
   else
     english = true
-    broadcastToAll("Language set to english", {1,1,1})
+    broadcastToAll("Language set to english", COLORS['WHITE'])
   end
   instructions_book.setPosition({-33.5,-8,15.23}) -- Hides it under the table
   instructions_book.setLock(true)
@@ -149,12 +155,12 @@ end
 
 function setSpanish()
   if (not english) then
-    broadcastToAll("Idioma ya en español", {1,1,1})
+    broadcastToAll("Idioma ya en español", COLORS['WHITE'])
   else
     english = false
-    broadcastToAll("Idioma cambiado a español", {1,1,1})
+    broadcastToAll("Idioma cambiado a español", COLORS['WHITE'])
     if (nsfw) then
-      broadcastToAll("NSFW sólo está disponible en inglés por el momento, ¡lo siento!", {1,1,1})
+      broadcastToAll("NSFW sólo está disponible en inglés por el momento, ¡lo siento!", COLORS['WHITE'])
     end
   end
   instructions_book.setPosition({-33.5,-8,15.23}) -- Hides it under the table
@@ -168,12 +174,12 @@ function setNSFW()
   if (english) then
     nsfw = not nsfw
     if (nsfw) then
-      broadcastToAll("Cards will be NSFW", {1,1,1})
+      broadcastToAll("Cards will be NSFW", COLORS['WHITE'])
     else
-      broadcastToAll("Cards will be default", {1,1,1})
+      broadcastToAll("Cards will be default", COLORS['WHITE'])
     end
   else
-      broadcastToAll("NSFW sólo está disponible en inglés por el momento, ¡lo siento!", {1,1,1})
+      broadcastToAll("NSFW sólo está disponible en inglés por el momento, ¡lo siento!", COLORS['WHITE'])
   end
 end
 
@@ -181,15 +187,15 @@ function setImploding()
   imploding = not imploding
   if (english) then
     if (imploding) then
-      broadcastToAll("Imploding Kittens added", {1,1,1})
+      broadcastToAll("Imploding Kittens added", COLORS['GREEN'])
     else
-      broadcastToAll("Imploding Kittens removed", {1,1,1})
+      broadcastToAll("Imploding Kittens removed", COLORS['RED'])
     end
   else
     if (imploding) then
-      broadcastToAll("Imploding Kittens añadido", {1,1,1})
+      broadcastToAll("Imploding Kittens añadido", COLORS['GREEN'])
     else
-      broadcastToAll("Imploding Kittens eliminado", {1,1,1})
+      broadcastToAll("Imploding Kittens eliminado", COLORS['RED'])
     end
   end
 end
@@ -198,15 +204,15 @@ function setStreaking()
   streaking = not streaking
   if (english) then
     if (streaking) then
-      broadcastToAll("Streaking Kittens added", {1,1,1})
+      broadcastToAll("Streaking Kittens added", COLORS['GREEN'])
     else
-      broadcastToAll("Streaking Kittens removed", {1,1,1})
+      broadcastToAll("Streaking Kittens removed", COLORS['RED'])
     end
   else
     if (streaking) then
-      broadcastToAll("Streaking Kittens añadido", {1,1,1})
+      broadcastToAll("Streaking Kittens añadido", COLORS['GREEN'])
     else
-      broadcastToAll("Streaking Kittens eliminado", {1,1,1})
+      broadcastToAll("Streaking Kittens eliminado", COLORS['RED'])
     end
   end
 end
@@ -312,7 +318,7 @@ function empezarPartida()
     deck_default.shuffle()
     deck_exploding.shuffle()
     deck_defuse.shuffle()
-  end, 90)
+  end, 200)
 
   Wait.frames(function ()
     -- Give each player the corresponding cards
@@ -327,7 +333,7 @@ function empezarPartida()
 
     -- Give each player 1 defuse card
     deck_defuse.dealToAll(1)
-  end, 180)
+  end, 260)
 
 
   Wait.frames(function ()
@@ -367,7 +373,7 @@ function empezarPartida()
       end
     end
     instruction_pos = instructions_book.getPosition()
-  end, 270)
+  end, 320)
 
   Wait.frames(function ()
     --Create the cleanup button
@@ -381,7 +387,7 @@ function empezarPartida()
     button.height = 500
     button.font_size = 350
     deck_defuse.createButton(button)
-  end, 360)
+  end, 380)
 end
 
 function limpiarMesa()
