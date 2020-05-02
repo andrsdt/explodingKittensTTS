@@ -219,6 +219,8 @@ end
 
 function getPlayers()
     players = getSeatedPlayers()
+    num_players = 0
+
     for v, k in ipairs(players) do
       num_players = num_players + 1
       player_colors[v] = k
@@ -401,12 +403,12 @@ function limpiarMesa()
   deck_defuse.clearButtons()
 
   --Remove the unused decks
-  if (deck_exploding != null) then
-    deck_exploding.destruct()
-  else
-    exploding_scripted_zone.getObjects()[1].destruct()
-
-  end
+    exploding_remaining = exploding_scripted_zone.getObjects()
+    if (#exploding_remaining > 0) then
+      for k,v in pairs(exploding_remaining) do
+        exploding_remaining[k].destruct()
+      end
+    end
 
   -- reinsert the corresponding defuses
   if (num_players > 2) then
@@ -572,14 +574,14 @@ end
 function robar(objectButtonClicked, playerColorClicked)
   deck_default = scripted_zone.getObjects()[1]
   deck_default.deal(1,playerColorClicked)
-  broadcastToAll(Player[playerColorClicked].steam_name .. " " .. lang['DRAWMSG'], {1,1,1})
+  broadcastToAll(Player[playerColorClicked].steam_name .. " " .. lang['DRAWMSG'], COLORS['WHITE'])
 end
 
 function cegarOponentes(objectButtonClicked, playerColorClicked)
   if (blindfoldToggle == true) then
-    broadcastToColor(lang['BLINDFOLDED'], playerColorClicked, {1,1,1})
+    broadcastToColor(lang['BLINDFOLDED'], playerColorClicked, COLORS['WHITE'])
   else
-    broadcastToColor(lang['UNBLINDFOLDED'], playerColorClicked, {1,1,1})
+    broadcastToColor(lang['UNBLINDFOLDED'], playerColorClicked, COLORS['WHITE'])
   end
 
   playerList = Player.getPlayers()
