@@ -635,7 +635,7 @@ function intercambiaArribaAbajo()
     })
 
     -- 3. Putting the deck on top of the individual card
-    Wait.frames(function () obj.putObject(deck_default) end, 10)
+    Wait.frames(function () obj.putObject(deck_default) end, 60)
   end
 end
 
