@@ -51,6 +51,7 @@ english = true
 lang = {
   ENGLISH = {
     CLEAR = "Clear deck",
+    NSFW_ON = "NSFW deck will be included in order to support more than 5 players",
     START = "Start",
     FIRST = "starts!",
     DRAW = "Draw",
@@ -68,6 +69,7 @@ lang = {
   },
   SPANISH = {
     CLEAR = "Limpiar mesa",
+    NSFW_ON = "Se ha incluído la baraja NSFW (inglés) para soportar más de 5 jugadores",
     START = "Comenzar",
     FIRST = "empieza!",
     DRAW = "Robar",
@@ -228,12 +230,6 @@ function getPlayers()
 end
 
 function prepararPartida()
-  -- Select the Language
-  if (english) then
-    lang = lang['ENGLISH']
-  else
-    lang = lang['SPANISH']
-  end
 
   -- Clear the board
   checker.clearButtons()
@@ -249,23 +245,46 @@ function prepararPartida()
     })
   end
 
+  -- Set the player count
+  getPlayers()
+
+  if (num_players > 5 and not nsfw) then
+    if (english) then
+      broadcastToAll(lang['ENGLISH']['NSFW_ON'], COLORS['WHITE'])
+    else
+      broadcastToAll(lang['SPANISH']['NSFW_ON'], COLORS['WHITE'])
+    end
+    -- english = true -- NSFW deck is only available in english
+    nsfw = true
+  end
+
+  -- Select the Language
+  if (english) then
+    lang = lang['ENGLISH']
+  else
+    lang = lang['SPANISH']
+  end
+
   if (nsfw) then
     nsfw_box.takeObject(deck_pos)
     nsfw_box.takeObject(defuse_pos)
     nsfw_box.takeObject(exploding_pos)
-
-    for i=0,2 do
-      default_box.takeObject({
-        position = {x = 10, y = 2+i/3, z = 7.11},
-        callback_function = function (obj) obj.destruct() end
-      })
+    if (num_players <= 5) then
+      for i=0,2 do
+        default_box.takeObject({
+          position = {x = 10, y = 2+i/3, z = 7.11},
+          callback_function = function (obj) obj.destruct() end
+        })
+      end
     end
+  end
 
-  else
+  if (num_players > 5) then
     default_box.takeObject(deck_pos)
     default_box.takeObject(defuse_pos)
     default_box.takeObject(exploding_pos)
   end
+
 
   Wait.frames(function () empezarPartida () end, 200)
 end
@@ -275,9 +294,6 @@ function empezarPartida()
   deck_default = scripted_zone.getObjects()[1]
   deck_defuse = defuse_scripted_zone.getObjects()[1]
   deck_exploding = exploding_scripted_zone.getObjects()[1]
-
-  -- Set the player count
-  getPlayers()
 
   if (imploding) then
     single_imploding_after = objectFromBox("IMPLODING AFTER", default_box)
