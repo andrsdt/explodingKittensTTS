@@ -250,12 +250,7 @@ function prepararPartida()
 
   if (num_players > 5 and not nsfw) then
     if (not (num_players == 6 and imploding)) then
-      if (english) then
-        broadcastToAll(lang['ENGLISH']['NSFW_ON'], COLORS['WHITE'])
-      else
-        broadcastToAll(lang['SPANISH']['NSFW_ON'], COLORS['WHITE'])
-      end
-      -- broadcastToAll(lang[engish and 'ENGLISH' or 'SPANISH']['NSFW_ON'], COLORS['WHITE'])
+      broadcastToAll(lang[engish and 'ENGLISH' or 'SPANISH']['NSFW_ON'], COLORS['WHITE'])
       nsfw = true
     end
     -- english = true -- NSFW deck is only available in english
@@ -408,7 +403,7 @@ function empezarPartida()
     button.font_size = 350
 
     deck_pos = deck_default.getPosition()
-
+    deck_default.setName("")
     -- A checker will be spawned with the "start" button
     spawnObject({
         type = "Checker_black",
