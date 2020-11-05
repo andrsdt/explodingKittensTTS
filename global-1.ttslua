@@ -285,7 +285,6 @@ function prepararPartida()
     default_box.takeObject(exploding_pos)
   end
 
-
   Wait.frames(function () empezarPartida () end, 200)
 end
 
