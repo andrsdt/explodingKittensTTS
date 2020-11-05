@@ -249,13 +249,17 @@ function prepararPartida()
   getPlayers()
 
   if (num_players > 5 and not nsfw) then
-    if (english) then
-      broadcastToAll(lang['ENGLISH']['NSFW_ON'], COLORS['WHITE'])
-    else
-      broadcastToAll(lang['SPANISH']['NSFW_ON'], COLORS['WHITE'])
+    if (not (num_players == 6 and imploding)) then
+      if (english) then
+        broadcastToAll(lang['ENGLISH']['NSFW_ON'], COLORS['WHITE'])
+      else
+        broadcastToAll(lang['SPANISH']['NSFW_ON'], COLORS['WHITE'])
+      end
+      -- broadcastToAll(lang[engish and 'ENGLISH' or 'SPANISH']['NSFW_ON'], COLORS['WHITE'])
+      nsfw = true
     end
     -- english = true -- NSFW deck is only available in english
-    nsfw = true
+
   end
 
   -- Select the Language
@@ -394,28 +398,37 @@ function empezarPartida()
 
   Wait.frames(function ()
     --Create the cleanup button
-    deck_defuse = defuse_scripted_zone.getObjects()[1]
-    deck_default.setName("")
     local button = {}
     button.click_function = 'limpiarMesa'
     button.label = lang['START']
-    button.position = {1.5, 0.6, 2.6}
+    button.scale = {4, 4, 4}
+    button.position = {0, 0.5, 0}
     button.width = 2600
     button.height = 500
     button.font_size = 350
-    deck_defuse.createButton(button)
+
+    deck_pos = deck_default.getPosition()
+
+    -- A checker will be spawned with the "start" button
+    spawnObject({
+        type = "Checker_black",
+        position          = {deck_pos.x,deck_pos.y-0.5,deck_pos.z-7},
+        rotation          = {0, 180, 0},
+        scale             = {0.5, 0.5, 0.5},
+        sound             = false,
+        callback_function = function(obj) obj.createButton(button) end
+    })
+
   end, 380)
 end
 
-function limpiarMesa()
+function limpiarMesa(obj)
+  obj.destruct() -- Remove the checker
   default_box.destruct()
   nsfw_box.destruct()
   deck_default = scripted_zone.getObjects()[1]
   deck_defuse = defuse_scripted_zone.getObjects()[1]
   deck_exploding = exploding_scripted_zone.getObjects()[1]
-
-  -- remove the start button
-  deck_defuse.clearButtons()
 
   --Remove the unused decks
     exploding_remaining = exploding_scripted_zone.getObjects()
@@ -424,16 +437,17 @@ function limpiarMesa()
         exploding_remaining[k].destruct()
       end
     end
-
   -- reinsert the corresponding defuses
-  if (num_players > 2) then
-      deck_default.putObject(deck_defuse)
-  else
-      new_defuse = deck_defuse.cut(2)
-      deck_default.putObject(new_defuse[2])
-      deck_defuse.destruct()
+  if (deck_defuse) then
+    if (num_players > 2) then
+        deck_default.putObject(deck_defuse)
+    else
+        new_defuse = deck_defuse.cut(2)
+        deck_default.putObject(new_defuse[2])
+        deck_defuse.destruct()
+    end
   end
-
+  print("b")
   crearControlesCartas()
 
   -- Shuffle the actions deck again
