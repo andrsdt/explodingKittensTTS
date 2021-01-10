@@ -278,11 +278,9 @@ function prepararPartida()
     end
   end
 
-  if (num_players > 5) then
-    default_box.takeObject(deck_pos)
-    default_box.takeObject(defuse_pos)
-    default_box.takeObject(exploding_pos)
-  end
+  default_box.takeObject(deck_pos)
+  default_box.takeObject(defuse_pos)
+  default_box.takeObject(exploding_pos)
 
   Wait.frames(function () empezarPartida () end, 200)
 end
